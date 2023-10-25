@@ -76,7 +76,7 @@ r_check <- function(major="3", minor="2.1") {
 #' This is not technically required, but should be practiced to avoid issues between \emph{h2o-3} dependencies.
 pkgs_check_update <- function(pkgs, lib.loc=file.path(Sys.getenv("R_LIBS_USER", .libPaths()[1L])),
                               check_only=TRUE, strict_version_check=TRUE, force_install=NULL,
-                              repos="http://s3.amazonaws.com/h2o-r/cran-dev",
+                             # repos="http://s3.amazonaws.com/h2o-r/cran-dev",(use only after claiming the bucket
                               method="curl", quiet=FALSE) {
   if (!length(pkgs) || !is.character(pkgs))
     stop("Argument 'pkgs' must be provided, a character vector of packages to check or update.")
