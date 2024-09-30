@@ -1,8 +1,8 @@
 import os
+import sys
 import re
 import requests
 from github import Github
-from urllib.parse import urlparse
 
 # Initialize GitHub client
 github_token = os.getenv("GITHUB_TOKEN")
@@ -11,13 +11,10 @@ if not github_token:
 
 g = Github(github_token)
 
-# Discord webhook URL
-#discord_webhook = os.getenv("DISCORD_WEBHOOK_URL")
-#if not discord_webhook:
-#    raise EnvironmentError("DISCORD_WEBHOOK_URL is not set.")
-
-# Organization name
-ORG_NAME = "h2oai"  # Replace with your organization's name
+# Get organization name from command-line argument
+if len(sys.argv) < 2:
+    raise ValueError("Organization name is required as an argument")
+ORG_NAME = sys.argv[1]
 
 # Regex pattern to find S3 URLs
 S3_PATTERN = re.compile(r'https?://([a-z0-9\-_]+)\.s3\.amazonaws\.com', re.IGNORECASE)
@@ -36,9 +33,6 @@ def check_s3_bucket(bucket_url):
             return f"Unknown Status ({response.status_code})"
     except requests.RequestException as e:
         return f"Error: {e}"
-
-# Function to send message to Discord
-
 
 def main():
     org = g.get_organization(ORG_NAME)
@@ -71,7 +65,7 @@ def main():
         except Exception as e:
             print(f"Error accessing repository {repo.full_name}: {e}")
 
-    # Prepare Discord message
+    # Prepare output message
     if unclaimed_buckets:
         message = "🚨 **Unclaimed S3 Buckets Found** 🚨\n\n"
         for bucket, repo_name, url in unclaimed_buckets:
@@ -80,8 +74,6 @@ def main():
     else:
         message = f"✅ **S3 Bucket Scan Complete** ✅\n\nNo unclaimed S3 buckets found.\n\n**Total Buckets Scanned:** {total_buckets}"
 
-    # Send to Discord
-    #send_to_discord(message)
     print(message)
 
 if __name__ == "__main__":
