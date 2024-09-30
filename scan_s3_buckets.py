@@ -12,9 +12,9 @@ if not github_token:
 g = Github(github_token)
 
 # Discord webhook URL
-discord_webhook = os.getenv("DISCORD_WEBHOOK_URL")
-if not discord_webhook:
-    raise EnvironmentError("DISCORD_WEBHOOK_URL is not set.")
+#discord_webhook = os.getenv("DISCORD_WEBHOOK_URL")
+#if not discord_webhook:
+#    raise EnvironmentError("DISCORD_WEBHOOK_URL is not set.")
 
 # Organization name
 ORG_NAME = "h2oai"  # Replace with your organization's name
@@ -38,16 +38,7 @@ def check_s3_bucket(bucket_url):
         return f"Error: {e}"
 
 # Function to send message to Discord
-def send_to_discord(message):
-    data = {
-        "content": message
-    }
-    try:
-        response = requests.post(discord_webhook, json=data)
-        if response.status_code not in (200, 204):
-            print(f"Failed to send Discord message: {response.status_code} - {response.text}")
-    except Exception as e:
-        print(f"Exception while sending Discord message: {e}")
+
 
 def main():
     org = g.get_organization(ORG_NAME)
@@ -90,8 +81,8 @@ def main():
         message = f"✅ **S3 Bucket Scan Complete** ✅\n\nNo unclaimed S3 buckets found.\n\n**Total Buckets Scanned:** {total_buckets}"
 
     # Send to Discord
-    send_to_discord(message)
-    print("Scan complete. Results sent to Discord.")
+    #send_to_discord(message)
+    print(message)
 
 if __name__ == "__main__":
     main()
