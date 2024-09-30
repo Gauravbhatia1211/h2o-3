@@ -22,7 +22,8 @@ search_s3_buckets() {
     else
         echo "🚨 **S3 Bucket URLs Found** 🚨"
         # Extract and print only the URLs containing s3.amazonaws.com
-        echo "$search_results" | grep -o 'https\?://[^ ]*s3.amazonaws.com[^ ]*' | sort -u
+        echo "$search_results" | grep -o 'https\?://[^ ]*s3.amazonaws.com[^ ]*' | \
+        awk -F'/' '{print $1 "//" $3 "/" $4 "/" $5}' | sort -u
     fi
 }
 
