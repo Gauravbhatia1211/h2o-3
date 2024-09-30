@@ -25,6 +25,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install requests PyGithub
 
+    - name: Debug - Print Working Directory
+      run: pwd
+
+    - name: Debug - List Files in Working Directory
+      run: ls -al
+
     - name: Run S3 Scanner
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
