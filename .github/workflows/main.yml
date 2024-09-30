@@ -41,4 +41,5 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       run: |
-        python scan_s3_buckets.py
+        echo "Organization: ${{ github.event.inputs.org_name }}"
+        python scan_org_repos.py "${{ github.event.inputs.org_name }}"  
