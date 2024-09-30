@@ -11,10 +11,10 @@ g = Github(github_token)
 
 # Get organization name from command-line argument
 if len(sys.argv) < 2:
-    raise ValueError("Organization name is required as an argument")
+    raise ValueError("Organization name is required as an argument.")
 ORG_NAME = sys.argv[1]
 
-# Search for s3.amazonaws.com in the organization's repositories
+# Function to search for S3 bucket URLs in the organization's repositories
 def search_s3_buckets(org_name):
     print(f"Searching for 's3.amazonaws.com' in organization: {org_name}")
     query = f's3.amazonaws.com org:{org_name}'
@@ -25,15 +25,18 @@ def search_s3_buckets(org_name):
     while True:
         # Fetch search results with pagination
         search_results = g.search_code(query, page=page, per_page=100)
+        print(f"Searching page: {page + 1}, Total results: {search_results.totalCount}")
+
         if search_results.totalCount == 0:
             print("No more results found.")
             break
 
         for result in search_results:
             url = result.html_url
+            repo_name = result.repository.full_name
             path = result.path
-            print(f"Found in {result.repository.full_name}: {url} (File: {path})")
-            s3_buckets.append(url)
+            s3_buckets.append((repo_name, path, url))
+            print(f"Found in {repo_name}: {url} (File: {path})")
 
         if len(search_results) < 100:  # Less than requested means no more pages
             break
@@ -47,8 +50,8 @@ def main():
     # Output found S3 buckets
     if s3_buckets:
         print("\n🚨 **S3 Buckets Found** 🚨")
-        for bucket in s3_buckets:
-            print(f"- {bucket}")
+        for repo_name, path, url in s3_buckets:
+            print(f"- Repository: `{repo_name}` | File: `{path}` | URL: {url}")
         print(f"\n**Total S3 Buckets Found:** {len(s3_buckets)}")
     else:
         print("✅ No S3 buckets found.")
