@@ -30,12 +30,26 @@ search_s3_buckets() {
         echo "$search_results" | grep -o 'https\?://[^ ]*s3.amazonaws.com[^ ]*' | \
         awk -F'/' '{print $1 "//" $3 "/" $4 "/" $5}' | sort -u | while read -r url; do
             # Perform a HEAD request to check the status code
-            status_code=$(curl -o /dev/null -s -w "%{http_code}" "$url")
+            status_code=$(curl -o /dev/null -s -w "%{http_code}" "$url" 2>&1)
+
+            # Check if the curl command succeeded
+            if [[ $? -ne 0 ]]; then
+                echo "⚠️ Error retrieving URL: $url. Error: $status_code"
+                continue
+            fi
+            
+            # Check if the status code is empty
+            if [ -z "$status_code" ]; then
+                echo "⚠️ No status code returned for URL: $url"
+                continue
+            fi
             
             if [ "$status_code" -eq 200 ]; then
                 claimed_buckets+=("$url")
             elif [ "$status_code" -eq 404 ]; then
                 unclaimed_buckets+=("$url")
+            else
+                echo "🔍 Found URL: $url with status code: $status_code"
             fi
         done
 
