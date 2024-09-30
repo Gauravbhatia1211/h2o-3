@@ -20,10 +20,9 @@ search_s3_buckets() {
     if [ -z "$search_results" ]; then
         echo "✅ No S3 buckets found."
     else
-        echo "🚨 **S3 Buckets Found** 🚨"
-        echo "$search_results" | while read -r line; do
-            echo "- $line"
-        done
+        echo "🚨 **S3 Bucket URLs Found** 🚨"
+        # Extract and print only the URLs containing s3.amazonaws.com
+        echo "$search_results" | grep -o 'https\?://[^ ]*s3.amazonaws.com[^ ]*' | sort -u
     fi
 }
 
