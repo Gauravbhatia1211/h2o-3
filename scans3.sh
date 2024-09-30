@@ -14,7 +14,7 @@ search_s3_buckets() {
     echo "Searching for 's3.amazonaws.com' in organization: $org"
 
     # Perform a search for the S3 bucket pattern
-    search_results=$(gh search code --query "s3.amazonaws.com in:file org:$org" --limit 100)
+    search_results=$(gh search code "s3.amazonaws.com in:file org:$org" --limit 100)
 
     # Check if any results were found
     if [ -z "$search_results" ]; then
