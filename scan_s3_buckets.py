@@ -2,6 +2,7 @@ import os
 import sys
 import re
 import requests
+import time
 from github import Github
 
 # Initialize GitHub client
@@ -21,8 +22,12 @@ S3_PATTERN = re.compile(r'https?://([a-z0-9\-_]+)\.s3\.amazonaws\.com', re.IGNOR
 
 # Function to check S3 bucket status
 def check_s3_bucket(bucket_url):
+    print(f"Checking status of bucket: {bucket_url}")
+    start_time = time.time()
     try:
         response = requests.head(bucket_url, timeout=10)
+        elapsed_time = time.time() - start_time
+        print(f"Response status for {bucket_url}: {response.status_code} (Time: {elapsed_time:.2f}s)")
         if response.status_code == 404:
             return "Unclaimed"
         elif response.status_code == 403:
@@ -35,25 +40,43 @@ def check_s3_bucket(bucket_url):
         return f"Error: {e}"
 
 def main():
+    print(f"Starting scan for organization: {ORG_NAME}")
+    start_time = time.time()
     org = g.get_organization(ORG_NAME)
+    
+    # Fetch repos
+    print("Fetching repositories...")
     repos = org.get_repos()
+    print(f"Found {repos.totalCount} repositories")
+
     total_buckets = 0
     unclaimed_buckets = []
+    repo_count = 0
 
+    # Iterate over repositories
     for repo in repos:
-        print(f"Scanning repository: {repo.full_name}")
+        repo_start_time = time.time()
+        repo_count += 1
+        print(f"\nScanning repository {repo_count}/{repos.totalCount}: {repo.full_name}")
+
         try:
             contents = repo.get_contents("")
             while contents:
                 file_content = contents.pop(0)
+
                 if file_content.type == "dir":
+                    print(f"Entering directory: {file_content.path}")
                     contents.extend(repo.get_contents(file_content.path))
                 elif file_content.type == "file":
                     if file_content.size > 5 * 1024 * 1024:  # Skip files larger than 5MB
+                        print(f"Skipping large file: {file_content.path} (Size: {file_content.size} bytes)")
                         continue
                     try:
+                        print(f"Processing file: {file_content.path}")
                         file_data = file_content.decoded_content.decode('utf-8', errors='ignore')
                         matches = S3_PATTERN.findall(file_data)
+                        if matches:
+                            print(f"Found {len(matches)} S3 bucket(s) in {file_content.path}")
                         for bucket in matches:
                             bucket_url = f"https://{bucket}.s3.amazonaws.com"
                             status = check_s3_bucket(bucket_url)
@@ -64,6 +87,13 @@ def main():
                         print(f"Error reading file {file_content.path}: {e}")
         except Exception as e:
             print(f"Error accessing repository {repo.full_name}: {e}")
+
+        repo_elapsed_time = time.time() - repo_start_time
+        print(f"Finished scanning repository {repo.full_name} (Time: {repo_elapsed_time:.2f}s)")
+
+    # Calculate total elapsed time
+    total_elapsed_time = time.time() - start_time
+    print(f"\nTotal scan completed in {total_elapsed_time:.2f}s")
 
     # Prepare output message
     if unclaimed_buckets:
