@@ -13,8 +13,12 @@ on:
 jobs:
   scan_s3_buckets:
     runs-on: ubuntu-latest
+    
 
     steps:
+    - name: Debug - List Files in Working Directory
+      run: ls -al
+      
     - name: Run S3 Scanner
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
