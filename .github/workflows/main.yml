@@ -42,4 +42,4 @@ jobs:
       
       run: |
         echo "Organization: ${{ github.event.inputs.org_name }}"
-        python scan_org_repos.py "${{ github.event.inputs.org_name }}"  
+        python scan_s3_buckets.py "${{ github.event.inputs.org_name }}"  
