@@ -37,7 +37,7 @@ search_s3_buckets() {
 
     # Function to check URL status and categorize
     check_url() {
-        url=$1
+        url="$1"
         status_code=$(curl -o /dev/null -s -w "%{http_code}" "$url")
         
         if [ "$status_code" -eq 200 ]; then
@@ -48,8 +48,8 @@ search_s3_buckets() {
     }
     export -f check_url
 
-    # Use xargs to run curl in parallel for faster processing
-    printf "%s\n" "${urls[@]}" | xargs -n 1 -P 10 -I {} bash -c 'check_url "$@"' _ {}
+    # Use printf to ensure proper handling of special characters and spaces
+    printf "%s\n" "${urls[@]}" | xargs -d '\n' -n 1 -P 10 -I {} bash -c 'check_url "$@"' _ {}
 
     # Print categorized results
     echo -e "✅ **Results** ✅"
