@@ -8,6 +8,11 @@ fi
 
 ORG_NAME="$1"
 
+# Define color codes
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+RESET='\033[0m'
+
 # Function to search for S3 buckets in the organization
 search_s3_buckets() {
     local org="$1"
@@ -21,9 +26,51 @@ search_s3_buckets() {
         echo "✅ No S3 buckets found."
     else
         echo "🚨 **S3 Bucket URLs Found** 🚨"
-        # Extract and print only the URLs containing s3.amazonaws.com
+
+        # Initialize arrays to store claimed and unclaimed buckets
+        claimed_buckets=()
+        unclaimed_buckets=()
+        
+        # Extract and check the status of URLs containing s3.amazonaws.com
         echo "$search_results" | grep -o 'https\?://[^ ]*s3.amazonaws.com[^ ]*' | \
-        awk -F'/' '{print $1 "//" $3 "/" $4 }' | sort -u
+        awk -F'/' '{print $1 "//" $3 "/" $4 }' | sort -u | while read -r url; do
+            # Perform a HEAD request to check the status code
+            status_code=$(curl -o /dev/null -s -w "%{http_code}" "$url" 2>/dev/null)
+
+            # Check if the curl command succeeded
+            if [[ $? -ne 0 ]]; then
+                echo "⚠️ Error retrieving URL: $url"
+                continue
+            fi
+            
+            # Categorize based on the status code
+            if [ "$status_code" -eq 200 ] || [ "$status_code" -eq 403 ]; then
+                claimed_buckets+=("$url")
+            elif [ "$status_code" -eq 404 ]; then
+                unclaimed_buckets+=("$url")
+            else
+                echo "🔍 Found URL: $url with status code: $status_code"
+            fi
+        done
+
+        # Print the categorized buckets
+        if [ ${#claimed_buckets[@]} -gt 0 ]; then
+            echo -e "${GREEN}✅ **Claimed Buckets (200/403)** ✅${RESET}"
+            for bucket in "${claimed_buckets[@]}"; do
+                echo "- $bucket"
+            done
+        else
+            echo "No claimed buckets found."
+        fi
+
+        if [ ${#unclaimed_buckets[@]} -gt 0 ]; then
+            echo -e "${RED}🚫 **Unclaimed Buckets (404)** 🚫${RESET}"
+            for bucket in "${unclaimed_buckets[@]}"; do
+                echo "- $bucket"
+            done
+        else
+            echo "No unclaimed buckets found."
+        fi
     fi
 }
 
