@@ -3,7 +3,12 @@ name: S3 Bucket Scanner
 on:
   schedule:
     - cron: '0 0 * * *' # Runs daily at midnight UTC
-  workflow_dispatch: # Allows manual triggering
+  workflow_dispatch:
+    inputs:
+      org_name:
+        description: 'Organization name to scan'
+        required: true
+        default: 'h2oai'  # You can change the default to any organization you'd like
 
 jobs:
   scan_s3_buckets:
