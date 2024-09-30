@@ -8,45 +8,27 @@ fi
 
 ORG_NAME="$1"
 
-# Function to search for S3 buckets
+# Function to search for S3 buckets in the organization
 search_s3_buckets() {
     local org="$1"
     echo "Searching for 's3.amazonaws.com' in organization: $org"
-    
-    # Fetch all repositories in the organization
-    repos=$(gh repo list "$org" --json nameWithOwner -q '.[].nameWithOwner')
 
-    # Initialize an array to store found S3 buckets
-    found_buckets=()
+    # Initialize a variable for total found
+    total_buckets=0
 
-    # Loop through each repository
-    for repo in $repos; do
-        echo "Scanning repository: $repo"
-        # Use the GitHub API to fetch files and search for the S3 pattern
-        # List all files in the repository
-        files=$(gh repo view "$repo" --json object -q '.object.entries[].name')
-        
-        # Loop through each file
-        for file in $files; do
-            # Fetch the file content and search for S3 URL
-            content=$(gh api repos/"$repo"/contents/"$file" | jq -r '.content' | base64 --decode)
-            if echo "$content" | grep -q "s3.amazonaws.com"; then
-                bucket_url="https://$repo/$file"
-                found_buckets+=("$bucket_url")
-                echo "Found S3 bucket in $repo: $bucket_url"
-            fi
-        done
-    done
+    # Perform a search for the S3 bucket pattern
+    search_results=$(gh api search/code -q "s3.amazonaws.com in:file org:$org" --json items -q '.items[] | .repository.full_name + " | " + .path')
 
-    # Summary of found buckets
-    if [ ${#found_buckets[@]} -eq 0 ]; then
+    # Check if any results were found
+    if [ -z "$search_results" ]; then
         echo "✅ No S3 buckets found."
     else
         echo "🚨 **S3 Buckets Found** 🚨"
-        for bucket in "${found_buckets[@]}"; do
-            echo "- $bucket"
+        echo "$search_results" | while read -r line; do
+            echo "- $line"
+            ((total_buckets++))
         done
-        echo "**Total S3 Buckets Found:** ${#found_buckets[@]}"
+        echo "**Total S3 Buckets Found:** $total_buckets"
     fi
 }
 
