@@ -1,7 +1,5 @@
 import os
 import sys
-import re
-import requests
 from github import Github
 
 # Initialize GitHub client
@@ -20,15 +18,26 @@ ORG_NAME = sys.argv[1]
 def search_s3_buckets(org_name):
     print(f"Searching for 's3.amazonaws.com' in organization: {org_name}")
     query = f's3.amazonaws.com org:{org_name}'
-    search_results = g.search_code(query)
-
+    
     s3_buckets = []
-    for result in search_results:
-        # Extract bucket information from the URL
-        url = result.html_url
-        path = result.path
-        print(f"Found in {result.repository.full_name}: {url} (File: {path})")
-        s3_buckets.append(url)
+    page = 0
+
+    while True:
+        # Fetch search results with pagination
+        search_results = g.search_code(query, page=page, per_page=100)
+        if search_results.totalCount == 0:
+            print("No more results found.")
+            break
+
+        for result in search_results:
+            url = result.html_url
+            path = result.path
+            print(f"Found in {result.repository.full_name}: {url} (File: {path})")
+            s3_buckets.append(url)
+
+        if len(search_results) < 100:  # Less than requested means no more pages
+            break
+        page += 1
 
     return s3_buckets
 
