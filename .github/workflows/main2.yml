@@ -1,0 +1,26 @@
+name: S3 Bucket Scanner using bash
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs daily at midnight UTC
+  workflow_dispatch:
+    inputs:
+      org_name:
+        description: 'Organization name to scan'
+        required: true
+        default: 'h2oai'  # You can change the default to any organization you'd like
+
+jobs:
+  scan_s3_buckets:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Run S3 Scanner
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      run: |
+        echo "Organization: ${{ github.event.inputs.org_name }}"
+        chmod +x scans3.sh
+        ./scans3.sh "${{ github.event.inputs.org_name }}"  
+        
