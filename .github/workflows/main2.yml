@@ -21,6 +21,6 @@ jobs:
       
       run: |
         echo "Organization: ${{ github.event.inputs.org_name }}"
-        chmod +x scans3.sh
+        ls
         ./scans3.sh "${{ github.event.inputs.org_name }}"  
         
